@@ -1,0 +1,123 @@
+DeepPoseKit
+>Single pose estimation
+>>Image contains single individual, may be cropped from larger multi-individual image after localization and tracking
+>>simplifies pose detection, does not require computationally expensive peak detection for grouping keypoints into indivual posture graphs
+>>More found **Insafutdinov et al 2016, Cao et al 2017**
+
+>Localization and tracking of individuals increases processing time of raw data
+>>Automated tracking algorithms removes the labor intensive annotating process
+>>Removes the need for linking posture data across multiple frames for tracking 
+
+>Developed two model implementations
+>>New model architecture -> Stacked DenseNet
+>>New method for processing confidence maps -> subpixel maxima
+>>>provides fast accurate peak detection for estimating keypoints
+>>>Subpixel precision even at low spatial resolutions
+
+>Discuss modification to incorporate hierarchical posture graph for learning geometry between keypoints on animals body, increasing accuacy.
+>Model uses fewer parameters than DeepLabCut and LEAP
+
+>Models description
+>>First
+>>>Novel implementaiton of FC-DenseNet -> Jegou et al 2017 (encoder-decoder models)
+>>>Arranged in stacked configuration -> Newell et al 2016
+>>Second
+>>>Modified version of stacked hourglass model from Newell et al (2016)
+>>>Possess hyperparameters that allow for changing of number of filters in each covolutional block to limit no. parameters
+>>>Newell et all however use 256 filters for all layers 
+
+>subpixel maxima motivation
+>>for F-CNN posture estimation model, confidence maps must be converted into coordinate values
+>>>Can be done by moving confidence maps outside of GPU and then processing them on CPU
+>>>>Allows for easy accurate calculation of coordinates with subpixel precision (Insafutdinov)
+>>>>Is not ideal as moving large arrays from GPU to CPU is not ideal, with CPU processes being more expensive
+>>>Can also be done by processing confidence maps on GPU, then move coordinates from GPU to CPU
+>>>>This requires confidence maps to be predicted at full resolution of input image or larger, slowing down inference speed
+
+>subpixel maxima explanation
+>>GPU based convolutional layer
+>>Uses image registration algorithm introduced by Guizar-Sicairos et al. (2008)
+>>>Translationally aligns two dimensional gaussian filter to each confidence map via Fourier based convolution 
+>>>Allows for accurate prediction even if confidence maps are drmaatically smaller than resolution of input image
+>>Even with confidence maps 1/8th resolution of original image, error did not drastically increase.
+>>>Making predictions using confidence maps at downsampled resolution allows for faster inference >1000Hz
+
+>Stacked DenseNet with subpixel Maxima
+>>Real-time inference at ~30-110hz depending on resolution of confidence map
+>>Faster than DeepLabCut for offline (100 batch) and real-time
+>>Faster than LEAP for offline (100 batch)
+>>Significantly slower than LEAP for real-time
+>>Slower than stacked hourglass for offline
+>>Significantly faster than stacked hourglass for real-time
+
+LEAP (Pereira et al 2019)
+>Used active learning, for iteratively modifying training set.
+>>Active learning: a trained model is uesd to initialize new training data, reducing annotation time
+>Applied modified version of previous model -> SegNet (Badrinarayanan et al 2015)
+>Attempts to limit model complexity, optimizing for inference speed.
+>Not robust to data variance; rotations, shifts in lighting, different experimental setups
+>Requires computationally expensive preprocessing **(PCA?)**
+>Used for single pose estimation
+
+DeepLapCut (Mathis et al 2018)
+>Proposed techinques to refine training data and minimize error on testing
+>> *Achieved through: Filtering data/selecting new training data based on **confidence scores or entropy of confidence maps** from model output.
+>Applied a modified version of previous model -> DeeperCut(insafutdinov et al 2016)
+>Built on ResNet Architecture(He et al 2016) (state of art used for image classif)
+>>Allows for incorporating **pretrained encoder** to improve performance while reducing size of training set
+>>Also known as **transfer learning** (Pratt 1992)
+>>Transfer learning doesnt actually provide much improvement over random initialization
+>>Pre trained architecture is overparameterized (>25mill params), allows for model to make accurate preds but results in slow inference
+>>Mathis and Warren(2018) found inference speed can be improved by reducing resolution of input images, achieved at expense of accuracy
+>Can do multiple pose estimation
+
+
+General
+>Mathis et al(2018), Pereira et al (2019) popularised use of CNN for animal pose estimation(APE)
+>>Made use of F-CNN, often refferred to as encoder-decoder model. (Confidence maps)
+>>Mathis and Pereira have both shown high accuracies can be achieved with small training set
+>>Model generalised to large dataset by iteratively modifying training set
+
+>Nath et al (2019) proposed temporal derivatives(speed,accleration) and autoregressive models to identify outlier frames
+>>Outliers can then be labeled to refine training set or can be excluded
+
+>Speed accuracy trade-off
+>>DeepLabCut has an overparametrized model (high accuracy, slow inference)
+>>LEAP uses smaller less robust model (Lower accuracy, less robust to varied data, quick inference) 
+
+>LEAP achieves limited success in comparison to DeepLabCut
+
+>F-CNN efficiency and robustness been improved via **multi-scale inference** (encoder-decoder models)
+>>Allows model to integrate large-scale global information e.g. lighting, image background, anatomical geometry
+>>Also allows for integration of local information e.g. differences in colour,texture, skin patterning etc
+
+>Most multiple pose estimation havent solved tracking problem -> Linking individual posture data over frames in video
+>>Multiple pose estimation requries annotation of multiple individuals, every individual in the image must be annotated to prevent model from learning conflicting information
+>>More laborious than for single pose estimation, with labour increasing proportional to number of individuals in image
+
+>Fast poes estimation using CNNs requires:
+>>Large parallel processing on GPU with large bathces of data
+>>Requires downsampling images to increase speed, which increases error (Mathias and Warren, 2018)
+
+
+
+Papers to read/Topics to read
+>LEAP -> Pereira et al 2019 
+>DeepLabCut -> Mathis et al 2019 
+>ResNet -> Insafutdinov et al 2016 
+>SegNet -> Badrinarayanan et al 2015 
+>Papers on tracking
+>>(Pérez-Escudero et al., 2014; Crall et al., 2015; Graving, 2017; Romero-Ferrero et al., 2019; Wild et al., 2018; Boenisch et al., 2018)
+>Individual pose estimation -> Newell et al 2016 
+>Convolutional regression models (Encoder-Decoder models) -> Jegou et al 2017
+>Conventional computer vision methods -> Guizar-Sicairos et al., 2008
+
+Topics to read up on 
+>Encoder-Decoder Models 
+>Confidence maps
+>PCA
+>Multiple pose estimation 
+>Active learning
+>Transfer learning
+>Why is GPU processing quicker than CPU?
+>Fourier based convolution
