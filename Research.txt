@@ -50,6 +50,57 @@ DeepPoseKit
 >>Slower than stacked hourglass for offline
 >>Significantly faster than stacked hourglass for real-time
 
+>Multi-scalegeometry between keypoints improves accuracy
+>>Minimizing prediction errors -> reduced affect on behavioural classification/analysis
+>>Especially for analyses based on time-frequency transforms**
+>>The effect of errors can be minimized using post-hoc** filters and smoothing but this loses high frequency information from time series data
+>>Incorporating multiple spatial scales** (Chen et al. 2017) when making predictions can reduce errors
+
+
+>Model output
+>>Model has 4 layers of output
+>>>Confidence map for smallest limb segments in graph
+>>>confidence maps for individual limbs (left leg, right arm)
+>>>Map with entire postural graph
+>>>Fully integrated map that incorporates entire posture graph and confidence peaks for join locations
+>>>Each level of hierarchical graph is built from lower levels of output, model learns correlated features across multiple scales
+
+>Model evaluation I
+>>Training Stacked DenseNet to predict hierarchical posture graph reduces keypoint error
+>>Feature maps for posture graph removed from final output for inference, increasing prediction accuracy **WHY????????*
+>>The error reduction from multi-scale geometry learning comes into full effect with datasets that have high image variance and sparse posture graphs
+>>Predicting posture graph useful for animals with long appendages e.g. insect legs/antennae where prediction error likely to occur bc occlusions and natural variation in movement of these body parts.
+
+>Model evaluation II 
+>>Benchmarked vs LEAP & DeepLabCut
+>>>Stacked DenseNet model outperforms LEAP and DLC in terms of speed and obtains higher accuracy than LEAP & Similar accuracy to DLC.
+>>>Stacked DenseNet and Stacked Hourglass both outperformed LEAP.
+>>>Stacked DenseNet models outperformed the LEAP model. 
+>>>Stacked dense model 2X faster inference, 3X higher mean accuracy than LEAP
+>>>Variance of predictions was lower, indicating models produced fewer extreme prediction error
+>>>at 1/4 resolution Stacked DenseNet model achieved accuracy almost identeical to DLC while running inference at 2X speed, using ~5% of parameters, 1.5mil vs 26 mil
+>>>Further reduction of resolution to 1/8th results in greater inference speed without much of an increase in error
+
+
+>Model evaluation III
+>>Stacked DenseNet(SDN) achieves good generalization without transfer learning
+>>When combined with data augmentation, as few as 5 training examples can be used as a training set for labelling keypoints with active learning
+>>Generalization to new data plateus after 100 training examples, so 100 examples becomes the minimum size for training set (with this value being dependant on variance of image data being annotated)
+>>DLC use of transfer learning, pretraining model on ImageNet VS Randomly intialised weights, transfer learning provided very small improvement to its ability to generalize, a mean reduction in Euclidean error of <0.5 pixel.
+>>SDN can be used for real time inference
+
+>Motive
+>>Therapy of mice
+>>Measuring behavior is a critical factor for many studies in neuroscience (Krakauer et al., 2017).
+>>Quantifying individual movement is essential for revealing the genetic(Kain et al., 2012; Brown et al., 2013; Ayroles et al., 2015) and environmental (Bierbach et al., 2017; Akhund-Zade et al., 2019; Versace et al., 2019) underpinnings of phenotypic variation in behavior
+
+
+New pose estimation methods
+>Replacing human annotatoins with fully articulated volumetrid 3D models of the animals body
+>>SMAL model from Zuffi et al., 2017 or the SMALST model from Zuffi et al., 2019)
+
+
+
 LEAP (Pereira et al 2019)
 >Used active learning, for iteratively modifying training set.
 >>Active learning: a trained model is uesd to initialize new training data, reducing annotation time
@@ -58,6 +109,7 @@ LEAP (Pereira et al 2019)
 >Not robust to data variance; rotations, shifts in lighting, different experimental setups
 >Requires computationally expensive preprocessing **(PCA?)**
 >Used for single pose estimation
+>LEAP model has greater variance than DPK stacked hourglass model, suggesting its more prone to extreme prediction errors
 
 DeepLapCut (Mathis et al 2018)
 >Proposed techinques to refine training data and minimize error on testing
@@ -98,7 +150,7 @@ General
 >Fast poes estimation using CNNs requires:
 >>Large parallel processing on GPU with large bathces of data
 >>Requires downsampling images to increase speed, which increases error (Mathias and Warren, 2018)
-
+>>
 
 
 Papers to read/Topics to read
@@ -111,6 +163,13 @@ Papers to read/Topics to read
 >Individual pose estimation -> Newell et al 2016 
 >Convolutional regression models (Encoder-Decoder models) -> Jegou et al 2017
 >Conventional computer vision methods -> Guizar-Sicairos et al., 2008
+>behaviour analysis (time frequency methods)
+>> Berman et al. (2014b), Berman et al. (2016), Klibaite et al. (2017), Todd et al. (2017), Klibaite and Shaevitz (2019) and Pereira et al. (2019) 
+>Improving CNN's outside of increased layers&connections
+>>better loss functions (Goodfellow et al., 2014; Johnson et al., 2016a; Chen et al., 2017; Zhang et al., 2018)
+>>models that more explicitly incorporate the spatial dependencies within a scene (Van den Oord et al., 2016b)
+>>temporal structure of the data (Seethapathi et al., 2019)
+>>as well as more mathematically principled approaches (e.g., Weigert et al., 2018; Roy et al., 2019) such as the application of formal probabilistic concepts (Kendall and Gal, 2017) and Bayesian inference at scale (Tran et al., 2018).
 
 Topics to read up on 
 >Encoder-Decoder Models 
